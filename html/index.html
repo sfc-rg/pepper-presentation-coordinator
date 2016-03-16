@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <style type="text/css">
+        h1,h2 {
+            font-size: 5em;
+            text-align: center;
+        }
+        h2 {
+            font-size: 7em;
+        }
+        div.time {
+            font-size: 40em;
+            width: 100%;
+            text-align: center;
+        }
+    </style>
+    <script src="/libs/qimessaging/1.0/qimessaging.js"></script>
+    <script>
+        var session = new QiSession();
+        function finishPresentation() {
+            session.service("ALMemory").done(function (ALMemory) {
+                ALMemory.raiseEvent("Timer/PresentationFinished", "");
+            });
+        }
+        function twoMinutesToGo() {
+            session.service("ALMemory").done(function (ALMemory) {
+                ALMemory.raiseEvent("Timer/PresentationTwoMinutesToGo", "");
+            });
+        }
+        function finishQanda() {
+            session.service("ALMemory").done(function (ALMemory) {
+                ALMemory.raiseEvent("Timer/QandaFinished", "");
+            });
+        }
+
+        function main() {
+            var minutesSpan = document.getElementById("minutes");
+            var secondsSpan = document.getElementById("seconds");
+            function render(remain) {
+                var minutes = Math.floor(remain / 60);
+                var seconds = remain - minutes * 60;
+                minutesSpan.innerHTML = ("0" + minutes).slice(-2);
+                secondsSpan.innerHTML = ("0" + seconds).slice(-2);
+            }
+
+            var displayDom = document.getElementById("display");
+            function refreshDisp(message) {
+                displayDom.innerHTML = message;
+            }
+
+            var presentation = 600;
+            var qanda = 300;
+            var status = "presentation"
+            var time = 0;
+            function timerLoop() {
+                ++time;
+                switch (status) {
+                case "presentation":
+                    var remain = presentation - time;
+                    if (remain == 120) {
+                        twoMinutesToGo();
+                    } else if (time == presentation) {
+                        status = "qanda";
+                        time = 0;
+                        finishPresentation();
+                    }
+                    render(presentation - time);
+                    break;
+                case "qanda":
+                    if (time == qanda) {
+                        status = "over";
+                        time = 0;
+                        finishQanda();
+                    }
+                    render(qanda - time);
+                    break;
+                case "over":
+                    render(time);
+                    break;
+                }
+            }
+            setInterval(timerLoop, 1000);
+        }
+        window.onload = main;
+    </script>
+    <title></title>
+</head>
+<body>
+    <h1>村井研 TERM最終発表</h1>
+    <div class="time">
+        <span id="minutes">10</span>:<span id="seconds">00</span>
+    </div>
+    <h2 id="display">発表時間</h2>
+</body>
+</html>
